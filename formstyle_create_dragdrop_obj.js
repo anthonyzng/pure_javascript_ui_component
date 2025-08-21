@@ -1,51 +1,51 @@
+var formstyle_create_dragdrop_cloneobj = null;
+var formstyle_create_dragdrop_lastest_target = null; // Store original dragged element
+var formstyle_create_dragdrop_crusorobj  = null;
+var formstyle_create_dragdrop_obj_prefix = 'formstyle_create_dragdrop_obj_';
+
 function formstyle_create_dragdrop_obj(groupid,direction,master_container_style,item_container_style,default_title){
-    if (isset(groupid) === false) { console_error("Missing groupid."); return false; }
-    if (isset(master_container_style) === false || master_container_style == '') { 
+    if (groupid == '' || groupid == undefined || groupid == null) { console_error("Missing groupid."); return false; }
+    if (master_container_style == '' || master_container_style == undefined || master_container_style == null) {
         master_container_style = 'background-color: #EAEAEA; border: 2px dashed var(--theme-color); border-radius: 8px; width:300px; margin:12px;';
     }
-    if (isset(item_container_style) === false || item_container_style == '') { item_container_style = ''; }
-    if (isset(direction) === false || direction == '') { direction = 'column'; }
-    if (isset(default_title) === false || default_title == '') { default_title = ''; }
-    let mytheme = platform_gettheme();
-
-    let prefix = 'formstyle_create_dragdrop_obj_';
+    if(item_container_style == '' || item_container_style == undefined || item_container_style == null) { item_container_style = ''; }
+    if (direction == '' || direction == undefined || direction == null) { direction = 'column'; }
+    if (default_title == '' || default_title == undefined || default_title == null) { default_title = 'Default Title'; }
+    
     // -- id -- //
-    let master_container_id = prefix +'master_container_' +groupid;
-    let container_id = prefix + 'container_'+groupid;
+    let master_container_id = formstyle_create_dragdrop_obj_prefix +'master_container_' +groupid;
+    let container_id = formstyle_create_dragdrop_obj_prefix + 'container_'+groupid;
     let mylayout = '';
 
     mylayout += '<div id="' + master_container_id + '" style="' + master_container_style + ' overscroll-behavior: none;">';
     // -- item container -- //
-    mylayout += '<div id="' + container_id + '" style="display:flex; flex-direction:'+direction+'; flex-wrap:wrap; gap:8px; margin:8px; min-height:60px; padding:20px; overscroll-behavior: none;">';
+    mylayout += '<div id="' + container_id + '" style="display:flex; flex-direction:'+direction+'; flex-wrap:wrap; gap:8px; margin:8px; min-height:60px; padding:20px; overscroll-behavior: none; '+item_container_style+'">';
     mylayout += '</div>';
     // -- end of item container -- //
     mylayout += '</div>';
 
     // -- default title layout -- //
     let default_title_layout = ()=>{
-        if(isset(default_title) === false || default_title == '') { default_title = 'Default Title'; }
         let this_layout = '';
-        let default_title_id = prefix + 'default_title_' + groupid + getuniqueid();
-        let default_edit_icon_id = prefix + 'default_edit_icon_' + groupid + getuniqueid();
-        let default_menu_icon_id = prefix + 'default_menu_icon_' + groupid + getuniqueid();
+        let default_title_id = formstyle_create_dragdrop_obj_prefix + 'default_title_' + groupid + formstyle_create_dragdrop_getUniqueId();
+        let default_edit_icon_id = formstyle_create_dragdrop_obj_prefix + 'default_edit_icon_' + groupid + formstyle_create_dragdrop_getUniqueId();
+        let default_menu_icon_id = formstyle_create_dragdrop_obj_prefix + 'default_menu_icon_' + groupid + formstyle_create_dragdrop_getUniqueId();
 
         this_layout += '<div style="background-color: #EAEAEA; display:flex; flex-direction:row; align-items:center; padding:4px; margin:8px;'+ '" >';
         this_layout += '<div style="background-color: #EAEAEA; display:flex; flex-direction:row; align-items:center; border: 2px dashed var(--theme-color); border-radius: 8px; padding:4px; margin:8px;'+ '" >';
         this_layout += '<input type="text" value="'+default_title+'" style="border: none; background: transparent; outline: none; flex: 1; color:var(--theme-color); " id="'+default_title_id+'" />';
-        this_layout += '<img src="'+mytheme['IMGFolder']+'pencil2_icon.png'+'" draggable="false" style="height:20px; padding:0px 5px 0px 5px; margin-left:auto; cursor:pointer;" id="'+default_edit_icon_id+'"/>';
+        this_layout += '<img src="'+'https://www.w3schools.com/html/pic_trulli.jpg'+'" draggable="false" style="height:20px; padding:0px 5px 0px 5px; margin-left:auto; cursor:pointer;" id="'+default_edit_icon_id+'"/>';
         this_layout += '</div>';
-        this_layout += '<img src="'+mytheme['IMGFolder']+'moreoptions_icon.png'+'" draggable="false" style="height:20px; padding:0px 5px 0px 5px; margin-left:auto; cursor:pointer;" id="'+default_menu_icon_id+'" />';
+        this_layout += '<img src="'+'https://www.w3schools.com/html/img_girl.jpg'+'" draggable="false" style="height:20px; padding:0px 5px 0px 5px; margin-left:auto; cursor:pointer;" id="'+default_menu_icon_id+'" />';
         this_layout += '</div>';
 
-        waitfordomid(default_edit_icon_id,()=>{
+        formstyle_create_dragdrop_obj_waitForElement('#'+default_edit_icon_id,()=>{
             document.getElementById(default_edit_icon_id).addEventListener('click',()=>{
                 console.log('edit title clicked');
             });
 
             document.getElementById(default_menu_icon_id).addEventListener('click',()=>{
-
-                let this_layout = '<H1>Menu</H1>';
-                focusbox_blockscreen(this_layout, true, 'width:80%; height:80%; max-width:650px;', '', 'top center', 'box', '', '');
+                console.log('menu icon clicked');
             });
         });
 
@@ -53,16 +53,17 @@ function formstyle_create_dragdrop_obj(groupid,direction,master_container_style,
     }
 
     let default_add_item_layout = ()=>{
-        let default_btn_add_item_id = prefix + 'default_btn_add_item_' + groupid + getuniqueid();
+        let default_btn_add_item_id = formstyle_create_dragdrop_obj_prefix + 'default_btn_add_item_' + groupid + formstyle_create_dragdrop_getUniqueId();
         let this_layout = '';
         this_layout += '<div style=" display:flex; flex-direction:row; justify-content:center; align-items:center; margin:12px; cursor:pointer;" id="'+default_btn_add_item_id+'">';
-        this_layout += '<img src="'+mytheme['IMGFolder']+'addnew_icon.png'+'" draggable="false" style="height:20px; padding:0px 5px 0px 5px;" />';
+        this_layout += '<img src="'+'https://www.w3schools.com/html/img_girl.jpg'+'" draggable="false" style="height:20px; padding:0px 5px 0px 5px;" />';
         this_layout += '<p style="color:var(--theme-color);" >Add New Item</p>';
         this_layout += '</div>';
 
-        waitfordomid(default_btn_add_item_id,()=>{
+        formstyle_create_dragdrop_obj_waitForElement('#'+default_btn_add_item_id,()=>{
             document.getElementById(default_btn_add_item_id).addEventListener('click',()=>{
-                formstyle_create_dragdrop_obj_additem(groupid,'<p style="color:red; padding:6px; ">Added Item </p>');
+                // -- add item to item container -- //
+                formstyle_create_dragdrop_obj_addItem(groupid,'<p style="color:red; padding:6px; ">Added Item </p>');
             });
         });
 
@@ -71,13 +72,12 @@ function formstyle_create_dragdrop_obj(groupid,direction,master_container_style,
 
     let default_item_layout = (item_name)=>{
         let this_layout = '';
-        let item_name_id = prefix + 'item_name_' + groupid + getuniqueid();
+        let item_name_id = formstyle_create_dragdrop_obj_prefix + 'item_name_' + groupid + formstyle_create_dragdrop_getUniqueId();
         this_layout += '<div style="background-color: blue; border-radius: 8px; padding:4px; margin:8px;'+ '" >';
         this_layout += '<p id="'+item_name_id+'" style="color:var(--theme-color);">'+item_name+'</p>';
-        // this_layout += clicknode_basenode(formstyle_clickbutton('btn_ucs_login', 'LOGIN', 'LOGIN', 'formtheme', '120px', '', '555'),'testbtnid'+item_name);
         this_layout += '</div>';
 
-        waitfordomid(item_name_id,()=>{
+        formstyle_create_dragdrop_obj_waitForElement('#'+item_name_id,()=>{
             document.getElementById(item_name_id).addEventListener('click',()=>{
                 console.log('item clicked : ' + item_name_id);
             });
@@ -86,44 +86,35 @@ function formstyle_create_dragdrop_obj(groupid,direction,master_container_style,
                 console.log("call other ui function is working.");
             });
         });
-
         return this_layout;
     }
 
-    waitfordomid(master_container_id, () => {
-
-        let screenmode = platform_screenmode();
-        if(screenmode == 'mobile'){
+    formstyle_create_dragdrop_obj_waitForElement('#'+master_container_id, () => {
+        if(formstyle_create_dragdrop_obj_isMobile()){
             document.body.style.overscrollBehavior = 'none';
         }else{
             document.body.style.overscrollBehavior = '';
         }
 
         // -- add the event listener to the screen
-        document.addEventListener('touchstart', formstyle_create_dragdrop_obj_handlemovestart);
-        document.addEventListener('mousedown', formstyle_create_dragdrop_obj_handlemovestart);
-        // -- set default title layout -- //
+        document.addEventListener('touchstart', formstyle_create_dragdrop_obj_handleMoveStart);
+        document.addEventListener('mousedown', formstyle_create_dragdrop_obj_handleMoveStart);
+        // -- testing items -- //
         for(let i = 0; i < 20; i++) {
-            formstyle_create_dragdrop_obj_additem(groupid,default_item_layout('Item '+i));
+            formstyle_create_dragdrop_obj_addItem(groupid,default_item_layout('Item '+i));
         }
 
         // -- given default title and add item button -- //
         if(document.getElementById(master_container_id).children.length == 1){
-            formstyle_create_dragdrop_obj_addbeforeitemcontainer(groupid,default_title_layout());
-            formstyle_create_dragdrop_obj_addafteritemcontainer(groupid,default_add_item_layout());
+            formstyle_create_dragdrop_obj_addBeforeItemContainer(groupid,default_title_layout());
+            formstyle_create_dragdrop_obj_addAfterItemContainer(groupid,default_add_item_layout());
         }
         
     });
 
     return mylayout;
 }
-
-// -- test variables -- //
-var formstyle_create_dragdrop_cloneobj = null;
-var formstyle_create_dragdrop_lastest_target = null; // Store original dragged element
-var formstyle_create_dragdrop_crusorobj  = null;
-
-function formstyle_create_dragdrop_obj_handlemovestart(event){
+function formstyle_create_dragdrop_obj_handleMoveStart(event){
     let selected_element = event.target;
 
     if(event.target.tagName == 'HTML'){return false;} // -- avoid out range of browser -- //
@@ -131,7 +122,7 @@ function formstyle_create_dragdrop_obj_handlemovestart(event){
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable) {
         return;
     }
-    if (event.type !== 'touchstart' && event.target.type !== 'INPUT') { 
+    if ( event.target.type !== 'INPUT') { 
         event.preventDefault();
     }
 
@@ -141,21 +132,28 @@ function formstyle_create_dragdrop_obj_handlemovestart(event){
     if (selected_element.classList.contains('formstyle_create_dragdrop_obj_css') == false){earlyreturn = true;}else{earlyreturn = false;}
     if(earlyreturn){return false}
 
-    formstyle_create_dragdrop_obj_cleanup();
-    formstyle_create_dragdrop_obj_removeevent();
-    
+    formstyle_create_dragdrop_obj_cleanUp();
+    formstyle_create_dragdrop_obj_removeEvent();
+    // -- disable scroll function for mobile -- //
+    if(formstyle_create_dragdrop_obj_isMobile()){
+        document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+        window.addEventListener('touchmove', formstyle_create_dragdrop_disableScroll, { passive: false });
+    }
+
+
+    // -- end of disable scroll function for mobile -- //
     formstyle_create_dragdrop_cloneobj = null; // -- clean the clone object
     formstyle_create_dragdrop_cloneobj = selected_element.cloneNode(true);
     formstyle_create_dragdrop_lastest_target = selected_element; // Store original element
 
     selected_element.classList.add('formstyle_create_dragdrop_obj_border');
-    document.addEventListener('touchmove', formstyle_create_dragdrop_obj_handlemoving);
-    document.addEventListener('touchend', formstyle_create_dragdrop_obj_handlemoveend);
-    document.addEventListener('mousemove', formstyle_create_dragdrop_obj_handlemoving);
-    document.addEventListener('mouseup', formstyle_create_dragdrop_obj_handlemoveend);
+    document.addEventListener('touchmove', formstyle_create_dragdrop_obj_handleMoving);
+    document.addEventListener('touchend', formstyle_create_dragdrop_obj_handleMoveEnd);
+    document.addEventListener('mousemove', formstyle_create_dragdrop_obj_handleMoving);
+    document.addEventListener('mouseup', formstyle_create_dragdrop_obj_handleMoveEnd);
 }
 
-function formstyle_create_dragdrop_obj_handlemoving(event){
+function formstyle_create_dragdrop_obj_handleMoving(event){
     if(formstyle_create_dragdrop_cloneobj == null){
         return false;
     }
@@ -175,8 +173,19 @@ function formstyle_create_dragdrop_obj_handlemoving(event){
     if(selected_element.classList.contains('formstyle_create_dragdrop_obj_css') == false){selected_element = event.target;}
 
     // -- crusor  moving -- //
-    let clkpos = screen_coords(event);
-
+    let currentX, currentY;
+    if (event.type === 'touchmove') {
+        if (event.changedTouches && event.changedTouches.length > 0) {
+            currentX = event.changedTouches[0].pageX;
+            currentY = event.changedTouches[0].pageY;
+        } else {
+            return false;
+        }
+    }else{
+        currentX = event.pageX;
+        currentY = event.pageY;
+    }
+    
     if (isset(formstyle_create_dragdrop_crusorobj) == true) {
         formstyle_create_dragdrop_crusorobj.remove();
         formstyle_create_dragdrop_crusorobj = null;
@@ -190,8 +199,8 @@ function formstyle_create_dragdrop_obj_handlemoving(event){
     formstyle_create_dragdrop_crusorobj.style.padding = '6px';
     formstyle_create_dragdrop_crusorobj.classList.add('formstyle_create_dragdrop_obj_animated-border');
     formstyle_create_dragdrop_crusorobj.style.position = 'absolute';
-    formstyle_create_dragdrop_crusorobj.style.top = (clkpos['Y'] + 0) + 'px';
-    formstyle_create_dragdrop_crusorobj.style.left = (clkpos['X'] + 10) + 'px';
+    formstyle_create_dragdrop_crusorobj.style.top = (currentY + 0) + 'px';
+    formstyle_create_dragdrop_crusorobj.style.left = (currentX + 10) + 'px';
     formstyle_create_dragdrop_crusorobj.style.zIndex = '999'; // -- set the zindex to the highest -- //
     formstyle_create_dragdrop_crusorobj.classList.remove('formstyle_create_dragdrop_obj_css');
 
@@ -223,7 +232,23 @@ function formstyle_create_dragdrop_obj_handlemoving(event){
     }
 
     // // -- end crusor moving -- //
-    //  selected_element = selected_element.closest('.formstyle_create_dragdrop_obj_container');
+
+    // -- add css to selected element -- //
+
+    if (event.type === 'mouseup' || event.type === 'mousemove') {
+        currentX = event.clientX;
+        currentY = event.clientY;
+    } else if (event.type === 'touchend' || event.type === 'touchmove' || event.type === 'touchstart') {
+        if (event.changedTouches && event.changedTouches.length > 0) {
+            currentX = event.changedTouches[0].clientX;
+            currentY = event.changedTouches[0].clientY;
+        } else {
+            return false;
+        }
+    }
+
+    selected_element = document.elementFromPoint(currentX, currentY);
+
     if(selected_element.classList.contains('formstyle_create_dragdrop_obj_css')==false && selected_element.closest('.formstyle_create_dragdrop_obj_css')){
         selected_element = selected_element.closest('.formstyle_create_dragdrop_obj_css');
     }
@@ -249,7 +274,7 @@ function formstyle_create_dragdrop_obj_handlemoving(event){
 
 }
 
-function formstyle_create_dragdrop_obj_handlemoveend(event){
+function formstyle_create_dragdrop_obj_handleMoveEnd(event){
     if(formstyle_create_dragdrop_cloneobj == null){
         return false; // No drag operation in progress
     }
@@ -270,12 +295,12 @@ function formstyle_create_dragdrop_obj_handlemoveend(event){
             releaseY = event.changedTouches[0].clientY;
         } else {
             // No valid touch data, abort
-            formstyle_create_dragdrop_obj_cleanup();
+            formstyle_create_dragdrop_obj_cleanUp();
             return false;
         }
     } else {
         // Unknown event type, abort
-        formstyle_create_dragdrop_obj_cleanup();
+        formstyle_create_dragdrop_obj_cleanUp();
         return false;
     }
 
@@ -305,7 +330,7 @@ function formstyle_create_dragdrop_obj_handlemoveend(event){
     }
 
     if (isValidDropTarget && dropTargetElement) {
-        formstyle_create_dragdrop_obj_performdrop(dropTargetElement);
+        formstyle_create_dragdrop_obj_performDrop(dropTargetElement);
     } else {
         // console.log("❌ Invalid drop - released outside drop zone");
     }
@@ -315,11 +340,20 @@ function formstyle_create_dragdrop_obj_handlemoveend(event){
         formstyle_create_dragdrop_lastest_target.classList.remove('formstyle_create_dragdrop_obj_border');
     }
     
-    formstyle_create_dragdrop_obj_cleanup();
+    formstyle_create_dragdrop_obj_cleanUp();
     stopAutoScroll();
+    // -- enable scroll function for mobile -- //
+    if(formstyle_create_dragdrop_obj_isMobile()){
+        document.getElementsByTagName('body')[0].style.overflow = 'auto';
+        window.removeEventListener('touchmove', formstyle_create_dragdrop_disableScroll, { passive: false });
+    }
 }
 
-function formstyle_create_dragdrop_obj_performdrop(dropTarget) {
+function formstyle_create_dragdrop_disableScroll(e){
+    e.preventDefault();
+}
+
+function formstyle_create_dragdrop_obj_performDrop(dropTarget) {
 
     if(dropTarget.classList.contains('formstyle_create_dragdrop_obj_css') == false && dropTarget.closest('.formstyle_create_dragdrop_obj_css')){
         dropTarget = dropTarget.closest('.formstyle_create_dragdrop_obj_css');
@@ -337,11 +371,11 @@ function formstyle_create_dragdrop_obj_performdrop(dropTarget) {
 
     formstyle_create_dragdrop_lastest_target.classList.remove('formstyle_create_dragdrop_obj_border');
     dropTarget.classList.remove('formstyle_create_dragdrop_obj_animated-border');
-    formstyle_create_dragdrop_obj_cleanup();
-    formstyle_create_dragdrop_obj_removeevent();
+    formstyle_create_dragdrop_obj_cleanUp();
+    formstyle_create_dragdrop_obj_removeEvent();
 }
 
-function formstyle_create_dragdrop_obj_cleanup() {
+function formstyle_create_dragdrop_obj_cleanUp() {
     // Reset all background colors
     let all_dragobj = document.querySelectorAll('.formstyle_create_dragdrop_obj_css');
     all_dragobj.forEach((dragobj) => {
@@ -357,30 +391,30 @@ function formstyle_create_dragdrop_obj_cleanup() {
     formstyle_create_dragdrop_lastest_target = null;
 }
 
-function formstyle_create_dragdrop_obj_removeevent() {
-    document.removeEventListener('touchmove', formstyle_create_dragdrop_obj_handlemoving);
-    document.removeEventListener('touchend', formstyle_create_dragdrop_obj_handlemoveend);
-    document.removeEventListener('mousemove', formstyle_create_dragdrop_obj_handlemoving);
-    document.removeEventListener('mouseup', formstyle_create_dragdrop_obj_handlemoveend);
+function formstyle_create_dragdrop_obj_removeEvent() {
+    document.removeEventListener('touchmove', formstyle_create_dragdrop_obj_handleMoving);
+    document.removeEventListener('touchend', formstyle_create_dragdrop_obj_handleMoveEnd);
+    document.removeEventListener('mousemove', formstyle_create_dragdrop_obj_handleMoving);
+    document.removeEventListener('mouseup', formstyle_create_dragdrop_obj_handleMoveEnd);
 }
 
-function formstyle_create_dragdrop_obj_addbeforeitemcontainer(groupid,layout){
-    if (isset(groupid) === false || groupid == '') { console_error("Missing groupid."); return false; }
-    if (isset(layout) === false || layout == '') { console_error("Missing layout."); return false; }
-    let prefix = 'formstyle_create_dragdrop_obj_';
+function formstyle_create_dragdrop_obj_addBeforeItemContainer(groupid,layout){
+    if (groupid == '' || groupid == undefined || groupid == null) { console_error("Missing groupid."); return false; }
+    if (layout == '' || layout == undefined || layout == null) { console_error("Missing layout."); return false; }
+    let formstyle_create_dragdrop_obj_prefix = 'formstyle_create_dragdrop_obj_';
     // -- id -- //
-    let container_id = prefix + 'container_'+groupid;
+    let container_id = formstyle_create_dragdrop_obj_prefix + 'container_'+groupid;
     let container = document.getElementById(container_id);
     container.insertAdjacentHTML('beforebegin', layout);
     return true;
 }
 
-function formstyle_create_dragdrop_obj_addafteritemcontainer(groupid,layout){
-    if (isset(groupid) === false || groupid == '') { console_error("Missing groupid."); return false; }
-    if (isset(layout) === false || layout == '') { console_error("Missing layout."); return false; }
-    let prefix = 'formstyle_create_dragdrop_obj_';
+function formstyle_create_dragdrop_obj_addAfterItemContainer(groupid,layout){
+    if (groupid == '' || groupid == undefined || groupid == null) { console_error("Missing groupid."); return false; }
+    if (layout == '' || layout == undefined || layout == null) { console_error("Missing layout."); return false; }
+    let formstyle_create_dragdrop_obj_prefix = 'formstyle_create_dragdrop_obj_';
     // -- id -- //
-    let container_id = prefix + 'container_'+groupid;
+    let container_id = formstyle_create_dragdrop_obj_prefix + 'container_'+groupid;
     let container = document.getElementById(container_id);
     container.insertAdjacentHTML('afterend', layout);
     return true;
@@ -395,14 +429,14 @@ function formstyle_create_dragdrop_obj_addClass2AllChildren(element, className) 
     }
 }
 
-function formstyle_create_dragdrop_obj_additem(groupid,layout,draggable){
-    if (isset(groupid) === false || groupid == '') { console_error("Missing groupid."); return false; }
-    if (isset(layout) === false || layout == '') { console_error("Missing layout."); return false; }
+function formstyle_create_dragdrop_obj_addItem(groupid,layout,draggable){
+    if (groupid == '' || groupid == undefined || groupid == null) { console_error("Missing groupid."); return false; }
+    if (layout == '' || layout == undefined || layout == null) { console_error("Missing layout."); return false; }
     if (isset(draggable) === false || draggable == '' || draggable == false || draggable == 0) { draggable = 'false'; }else{draggable = 'true';}
 
-    let prefix = 'formstyle_create_dragdrop_obj_';
+    let formstyle_create_dragdrop_obj_prefix = 'formstyle_create_dragdrop_obj_';
     // -- id -- //
-    let container_id = prefix + 'container_'+groupid;
+    let container_id = formstyle_create_dragdrop_obj_prefix + 'container_'+groupid;
     let container = document.getElementById(container_id);
     
     let tmp_div = document.createElement('div');
@@ -416,6 +450,55 @@ function formstyle_create_dragdrop_obj_additem(groupid,layout,draggable){
     return true;
 }
 
+function formstyle_create_dragdrop_getUniqueId() {
+    return 'formstyle_create_dragdrop_obj_' + crypto.randomUUID();
+}
+
+function formstyle_create_dragdrop_obj_isMobile() {
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+
+  // Detect Android
+    if (/android/i.test(ua)) return true;
+
+  // Detect iOS (iPhone, iPad, iPod)
+    if (/iPhone|iPad|iPod/i.test(ua)) return true;
+
+  // Detect Windows Phone
+    if (/windows phone/i.test(ua)) return true;
+
+  // Detect Blackberry
+    if (/blackberry/i.test(ua)) return true;
+
+  return false; // default = not mobile
+}
+
+function formstyle_create_dragdrop_obj_waitForElement(selector, callback, interval = 50, timeout = 5000) {
+    return new Promise((resolve) => {
+        if (!selector || typeof selector !== 'string') {
+            console.error('waitForElement: selector must be a non-empty string.');
+            return resolve(false);
+        }
+        if (typeof callback !== 'function') {
+            console.error('waitForElement: callback must be a function.');
+            return resolve(false);
+        }
+
+        const startTime = Date.now();
+
+        const timer = setInterval(() => {
+            const el = document.querySelector(selector);
+            if (el) {
+                clearInterval(timer);
+                callback(el);
+                return resolve(true);
+            } else if (Date.now() - startTime > timeout) {
+                clearInterval(timer);
+                console.warn(`waitForElement: element "${selector}" not found within ${timeout}ms.`);
+                return resolve(false);
+            }
+        }, interval);
+    });
+}
 
 var autoScrollTimer = null;
 var isAutoScrolling = false;
