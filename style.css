@@ -1,0 +1,61 @@
+.formstyle_create_dragdrop_obj_css{
+  -webkit-user-select: none; /* Chrome / Safari */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE/Edge */
+  user-select: none;         /* Standard */
+}
+
+.formstyle_create_dragdrop_obj_css_child{
+  -webkit-user-select: none; /* Chrome / Safari */
+  -moz-user-select: none;    /* Firefox */
+  -ms-user-select: none;     /* IE/Edge */
+  user-select: none;         /* Standard */
+  /* touch-action: none;  */
+}
+
+
+.formstyle_create_dragdrop_obj_border{
+    border: 2px dashed var(--theme-color);
+    border-radius: 8px;
+}
+
+
+.formstyle_create_dragdrop_obj_animated-border {
+   border: 2px dashed var(--theme-color);
+   border-radius: 8px;
+   
+   /* Animation for moving dashes */
+   background-image: 
+       linear-gradient(90deg, var(--theme-color) 50%, transparent 50%),
+       linear-gradient(90deg, var(--theme-color) 50%, transparent 50%),
+       linear-gradient(0deg, var(--theme-color) 50%, transparent 50%),
+       linear-gradient(0deg, var(--theme-color) 50%, transparent 50%);
+   background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+   background-size: 4px 2px, 4px 2px, 2px 4px, 2px 4px;
+   background-position: 
+       0 0, 
+       0 100%, 
+       0 0, 
+       100% 0;
+   border: none;
+   animation: formstyle_create_dragdrop_obj_moveDashes 2s linear infinite;
+}
+
+@keyframes formstyle_create_dragdrop_obj_moveDashes {
+   0% {
+       background-position: 
+           0 0, 
+           0 100%, 
+           0 0, 
+           100% 0;
+   }
+   100% {
+       background-position: 
+           15px 0, 
+           -15px 100%, 
+           0 15px, 
+           100% -15px;
+   }
+}
+
+
