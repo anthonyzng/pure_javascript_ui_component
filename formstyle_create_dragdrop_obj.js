@@ -114,14 +114,35 @@ function formstyle_create_dragdrop_obj(groupid,direction,master_container_style,
 
     return mylayout;
 }
+
+
+function formstyle_create_dragdrop_obj_isClickable(element){
+    return (typeof element.onclick === 'function' || element.hasClickListener === true);
+}
+
+function formstyle_create_dragdrop_obj_isEditable(element){
+    return (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.isContentEditable );
+}
+
+function formstyle_create_dragdrop_obj_ignoreEvent(event){
+    let element = event.target;
+
+    while (element) {
+        if (formstyle_create_dragdrop_obj_isEditable(element) || formstyle_create_dragdrop_obj_isClickable(element)) {
+        return true; // found something editable or clickable
+        }
+        element = element.parentElement; // move up the DOM tree
+    }
+
+    return false; // no matches
+}
+
+
 function formstyle_create_dragdrop_obj_handleMoveStart(event){
     let selected_element = event.target;
 
-    if(event.target.tagName == 'HTML'){return false;} // -- avoid out range of browser -- //
-
-    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable) {
-        return;
-    }
+    if(formstyle_create_dragdrop_obj_ignoreEvent(event)){return false;}
+    
     if ( event.target.type !== 'INPUT') { 
         event.preventDefault();
     }
@@ -517,7 +538,7 @@ function startAutoScroll(direction) {
             }
             // Scroll down
             window.scrollBy({
-                top: 60,
+                top: 200,
                 behavior: 'smooth'
             });
         } else if (direction === 'up') {
@@ -528,7 +549,7 @@ function startAutoScroll(direction) {
             }
             // Scroll up
             window.scrollBy({
-                top: -60,
+                top: -200,
                 behavior: 'smooth'
             });
         }
