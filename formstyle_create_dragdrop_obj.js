@@ -1,7 +1,65 @@
-var formstyle_create_dragdrop_cloneobj = null;
-var formstyle_create_dragdrop_lastest_target = null; // Store original dragged element
-var formstyle_create_dragdrop_crusorobj  = null;
+var formstyle_create_dragdrop_obj_cloneobj = null;
+var formstyle_create_dragdrop_obj_lastest_target = null; // Store original dragged element
+var formstyle_create_dragdrop_obj_crusorobj  = null;
 var formstyle_create_dragdrop_obj_prefix = 'formstyle_create_dragdrop_obj_';
+var formstyle_create_dragdrop_obj_clickstart_timer = null;
+var formstyle_create_dragdrop_obj_enabledragevent = null;
+
+function formstyle_create_dragdrop_obj_throttle(callback,delay) {
+    let timeoutId;
+    let lastExecTime = 0;
+    return function (...args) {
+        const currentTime = Date.now();
+        
+        if (currentTime - lastExecTime > delay) {
+            callback.apply(this, args);
+            lastExecTime = currentTime;
+        } else {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                callback.apply(this, args);
+                lastExecTime = Date.now();
+            }, delay - (currentTime - lastExecTime));
+        }
+    };
+}
+
+const formstyle_create_dragdrop_obj_optimizedHandleMoving = formstyle_create_dragdrop_obj_throttle(function(event) {
+    if (formstyle_create_dragdrop_obj_cloneobj == null) {
+        return false;
+    }
+
+    if (!(event.target instanceof HTMLElement) || event.target.tagName == 'HTML') {
+        return false;
+    }
+
+    if (!event || !event.target) return false;
+
+    // Prevent default only when necessary
+    if (event.type !== 'touchmove') { 
+        event.preventDefault();
+    }
+
+    if(formstyle_create_dragdrop_obj_isMobile()){
+        document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+        window.addEventListener('touchmove', formstyle_create_dragdrop_disableScroll, { passive: false });
+    }
+
+    let selected_element = event.target;
+    
+    // Optimize element traversal
+    if (!selected_element.classList.contains('formstyle_create_dragdrop_obj_css')) {
+        const closest = selected_element.closest('.formstyle_create_dragdrop_obj_css');
+        if (closest) {
+            selected_element = closest;
+        }
+    }
+
+    // Cursor moving with reduced DOM operations
+    formstyle_create_dragdrop_obj_handleMoving(event);
+
+}, 10); // ~60fps throttling
+
 
 function formstyle_create_dragdrop_obj(groupid,direction,master_container_style,item_container_style,default_title){
     if (groupid == '' || groupid == undefined || groupid == null) { console_error("Missing groupid."); return false; }
@@ -116,6 +174,24 @@ function formstyle_create_dragdrop_obj(groupid,direction,master_container_style,
 }
 
 
+function formstyle_create_dragdrop_obj_clickstart(){
+    formstyle_create_dragdrop_obj_clickstart_timer = setTimeout(()=>{
+        document.addEventListener('touchmove', formstyle_create_dragdrop_obj_handleMoving);
+        document.addEventListener('mousemove', formstyle_create_dragdrop_obj_handleMoving);
+        formstyle_create_dragdrop_obj_enabledragevent = true;
+    },1000);
+}
+
+function formstyle_create_dragdrop_obj_cancelclickstart_timer(){
+    if(formstyle_create_dragdrop_obj_clickstart_timer){
+        clearTimeout(formstyle_create_dragdrop_obj_clickstart_timer);
+        formstyle_create_dragdrop_obj_clickstart_timer = null;
+        formstyle_create_dragdrop_obj_removeEvent();
+        formstyle_create_dragdrop_obj_enabledragevent = false;
+    }
+}
+
+
 function formstyle_create_dragdrop_obj_isClickable(element){
     return (typeof element.onclick === 'function' || element.hasClickListener === true);
 }
@@ -161,21 +237,20 @@ function formstyle_create_dragdrop_obj_handleMoveStart(event){
         window.addEventListener('touchmove', formstyle_create_dragdrop_disableScroll, { passive: false });
     }
 
-
     // -- end of disable scroll function for mobile -- //
-    formstyle_create_dragdrop_cloneobj = null; // -- clean the clone object
-    formstyle_create_dragdrop_cloneobj = selected_element.cloneNode(true);
-    formstyle_create_dragdrop_lastest_target = selected_element; // Store original element
+    formstyle_create_dragdrop_obj_cloneobj = null; // -- clean the clone object
+    formstyle_create_dragdrop_obj_cloneobj = selected_element.cloneNode(true);
+    formstyle_create_dragdrop_obj_lastest_target = selected_element; // Store original element
 
     selected_element.classList.add('formstyle_create_dragdrop_obj_border');
-    document.addEventListener('touchmove', formstyle_create_dragdrop_obj_handleMoving);
+
+    formstyle_create_dragdrop_obj_clickstart();
     document.addEventListener('touchend', formstyle_create_dragdrop_obj_handleMoveEnd);
-    document.addEventListener('mousemove', formstyle_create_dragdrop_obj_handleMoving);
     document.addEventListener('mouseup', formstyle_create_dragdrop_obj_handleMoveEnd);
 }
 
 function formstyle_create_dragdrop_obj_handleMoving(event){
-    if(formstyle_create_dragdrop_cloneobj == null){
+    if(formstyle_create_dragdrop_obj_cloneobj == null){
         return false;
     }
 
@@ -190,8 +265,7 @@ function formstyle_create_dragdrop_obj_handleMoving(event){
     if (event.type !== 'touchmove') { event.preventDefault();}
 
     let selected_element = event.target; // -- current target 
-    if(selected_element.classList.contains('formstyle_create_dragdrop_obj_css') == false){selected_element = selected_element.parentElement;}
-    if(selected_element.classList.contains('formstyle_create_dragdrop_obj_css') == false){selected_element = event.target;}
+    if(selected_element.classList.contains('formstyle_create_dragdrop_obj_css') == false){selected_element = selected_element.parentElement;}else{selected_element = event.target;}
 
     // -- crusor  moving -- //
     let currentX, currentY;
@@ -207,52 +281,32 @@ function formstyle_create_dragdrop_obj_handleMoving(event){
         currentY = event.pageY;
     }
     
-    if (isset(formstyle_create_dragdrop_crusorobj) == true) {
-        formstyle_create_dragdrop_crusorobj.remove();
-        formstyle_create_dragdrop_crusorobj = null;
+    if (isset(formstyle_create_dragdrop_obj_crusorobj) == true) {
+        formstyle_create_dragdrop_obj_crusorobj.remove();
+        formstyle_create_dragdrop_obj_crusorobj = null;
     }
     
-    formstyle_create_dragdrop_crusorobj = document.createElement('div');
-    formstyle_create_dragdrop_crusorobj.appendChild(formstyle_create_dragdrop_cloneobj.cloneNode(true));
-    formstyle_create_dragdrop_crusorobj = formstyle_create_dragdrop_cloneobj.cloneNode(true);
-    formstyle_create_dragdrop_crusorobj.style.backgroundColor = 'white';
-    formstyle_create_dragdrop_crusorobj.style.opacity = '0.8';
-    formstyle_create_dragdrop_crusorobj.style.padding = '6px';
-    formstyle_create_dragdrop_crusorobj.classList.add('formstyle_create_dragdrop_obj_animated-border');
-    formstyle_create_dragdrop_crusorobj.style.position = 'absolute';
-    formstyle_create_dragdrop_crusorobj.style.top = (currentY + 0) + 'px';
-    formstyle_create_dragdrop_crusorobj.style.left = (currentX + 10) + 'px';
-    formstyle_create_dragdrop_crusorobj.style.zIndex = '999'; // -- set the zindex to the highest -- //
-    formstyle_create_dragdrop_crusorobj.classList.remove('formstyle_create_dragdrop_obj_css');
+    formstyle_create_dragdrop_obj_crusorobj = document.createElement('div');
+    formstyle_create_dragdrop_obj_crusorobj.appendChild(formstyle_create_dragdrop_obj_cloneobj.cloneNode(true));
+    formstyle_create_dragdrop_obj_crusorobj = formstyle_create_dragdrop_obj_cloneobj.cloneNode(true);
+    formstyle_create_dragdrop_obj_crusorobj.style.backgroundColor = 'white';
+    formstyle_create_dragdrop_obj_crusorobj.style.opacity = '0.8';
+    formstyle_create_dragdrop_obj_crusorobj.style.padding = '6px';
+    formstyle_create_dragdrop_obj_crusorobj.classList.add('formstyle_create_dragdrop_obj_animated-border');
+    formstyle_create_dragdrop_obj_crusorobj.style.position = 'absolute';
+    formstyle_create_dragdrop_obj_crusorobj.style.top = (currentY + 0) + 'px';
+    formstyle_create_dragdrop_obj_crusorobj.style.left = (currentX + 10) + 'px';
+    formstyle_create_dragdrop_obj_crusorobj.style.zIndex = '999'; // -- set the zindex to the highest -- //
+    formstyle_create_dragdrop_obj_crusorobj.classList.remove('formstyle_create_dragdrop_obj_css');
 
     document.body.style.cursor = 'grabbing';
-    if(formstyle_create_dragdrop_crusorobj != null){
-        document.body.appendChild(formstyle_create_dragdrop_crusorobj);
+    if(formstyle_create_dragdrop_obj_crusorobj != null){
+        document.body.appendChild(formstyle_create_dragdrop_obj_crusorobj);
     }
     
     // -- auto scroll when cursor is near top or bottom of window -- //
-    let mouseY = event.clientY;
-    if (event.type == 'touchmove') { mouseY = event.touches[0].clientY; }
-    const windowHeight = window.innerHeight;
-    const bottomThreshold = 100; // px from bottom to trigger scroll down
-    const topThreshold = 100;    // px from top to trigger scroll up
-
-    if (mouseY <= topThreshold) {
-        // Cursor near top → start auto scroll up
-        if (!isAutoScrolling) {
-            startAutoScroll('up');
-        }
-    } else if (windowHeight - mouseY <= bottomThreshold) {
-        // Cursor near bottom → start auto scroll down
-        if (!isAutoScrolling) {
-            startAutoScroll('down');
-        }
-    } else {
-        // Cursor not near edges → stop scrolling
-        stopAutoScroll();
-    }
-
-    // // -- end crusor moving -- //
+    formstyle_create_dragdrop_obj_handleAutoScroll(event);
+    //-- end crusor moving -- //
 
     // -- add css to selected element -- //
 
@@ -274,7 +328,7 @@ function formstyle_create_dragdrop_obj_handleMoving(event){
         selected_element = selected_element.closest('.formstyle_create_dragdrop_obj_css');
     }
     
-    if (selected_element.classList.contains('formstyle_create_dragdrop_obj_css') && selected_element != formstyle_create_dragdrop_lastest_target) {
+    if (selected_element.classList.contains('formstyle_create_dragdrop_obj_css') && selected_element != formstyle_create_dragdrop_obj_lastest_target) {
         selected_element.classList.add('formstyle_create_dragdrop_obj_animated-border');
     }else{
         let all_dragobj = document.querySelectorAll('.formstyle_create_dragdrop_obj_css');
@@ -296,13 +350,13 @@ function formstyle_create_dragdrop_obj_handleMoving(event){
 }
 
 function formstyle_create_dragdrop_obj_handleMoveEnd(event){
-    if(formstyle_create_dragdrop_cloneobj == null){
+    if(formstyle_create_dragdrop_obj_cloneobj == null){
         return false; // No drag operation in progress
     }
 
-    if (isset(formstyle_create_dragdrop_crusorobj) == true) {
-        formstyle_create_dragdrop_crusorobj.remove();
-        formstyle_create_dragdrop_crusorobj = null;
+    if (isset(formstyle_create_dragdrop_obj_crusorobj) == true) {
+        formstyle_create_dragdrop_obj_crusorobj.remove();
+        formstyle_create_dragdrop_obj_crusorobj = null;
     }
 
     // -- Get the actual release position
@@ -342,7 +396,7 @@ function formstyle_create_dragdrop_obj_handleMoveEnd(event){
         }
         // Also check if it's a container (div with formstyle_create_dragdrop_obj_ id)
         if (currentElement.id && currentElement.id.startsWith('formstyle_create_dragdrop_obj_') && 
-            currentElement.id !== formstyle_create_dragdrop_lastest_target.closest('[id^="formstyle_create_dragdrop_obj_"]').id) {
+            currentElement.id !== formstyle_create_dragdrop_obj_lastest_target.closest('[id^="formstyle_create_dragdrop_obj_"]').id) {
             isValidDropTarget = true;
             dropTargetElement = currentElement;
             break;
@@ -357,12 +411,12 @@ function formstyle_create_dragdrop_obj_handleMoveEnd(event){
     }
 
     // Clean up
-    if(isset(formstyle_create_dragdrop_lastest_target)){
-        formstyle_create_dragdrop_lastest_target.classList.remove('formstyle_create_dragdrop_obj_border');
+    if(isset(formstyle_create_dragdrop_obj_lastest_target)){
+        formstyle_create_dragdrop_obj_lastest_target.classList.remove('formstyle_create_dragdrop_obj_border');
     }
     
     formstyle_create_dragdrop_obj_cleanUp();
-    stopAutoScroll();
+    formstyle_create_dragdrop_obj_stopOptimizedAutoScroll();
     // -- enable scroll function for mobile -- //
     if(formstyle_create_dragdrop_obj_isMobile()){
         document.getElementsByTagName('body')[0].style.overflow = 'auto';
@@ -381,16 +435,16 @@ function formstyle_create_dragdrop_obj_performDrop(dropTarget) {
     }
 
     if (dropTarget.classList.contains('formstyle_create_dragdrop_obj_css')) {
-        if(dropTarget.previousElementSibling == formstyle_create_dragdrop_lastest_target){
-            dropTarget.parentElement.insertBefore(dropTarget, formstyle_create_dragdrop_lastest_target); // -- insert after
+        if(dropTarget.previousElementSibling == formstyle_create_dragdrop_obj_lastest_target){
+            dropTarget.parentElement.insertBefore(dropTarget, formstyle_create_dragdrop_obj_lastest_target); // -- insert after
         }else{
-            dropTarget.parentElement.insertBefore(formstyle_create_dragdrop_lastest_target, dropTarget); // -- insert before
+            dropTarget.parentElement.insertBefore(formstyle_create_dragdrop_obj_lastest_target, dropTarget); // -- insert before
         }
     } else if (dropTarget.id && dropTarget.id.startsWith('formstyle_create_dragdrop_obj_container_')) {
-        dropTarget.appendChild(formstyle_create_dragdrop_lastest_target);
+        dropTarget.appendChild(formstyle_create_dragdrop_obj_lastest_target);
     }
 
-    formstyle_create_dragdrop_lastest_target.classList.remove('formstyle_create_dragdrop_obj_border');
+    formstyle_create_dragdrop_obj_lastest_target.classList.remove('formstyle_create_dragdrop_obj_border');
     dropTarget.classList.remove('formstyle_create_dragdrop_obj_animated-border');
     formstyle_create_dragdrop_obj_cleanUp();
     formstyle_create_dragdrop_obj_removeEvent();
@@ -407,9 +461,9 @@ function formstyle_create_dragdrop_obj_cleanUp() {
     document.body.style.cursor = '';
     
     // Clear global variables
-    formstyle_create_dragdrop_cloneobj = null;
-    formstyle_create_dragdrop_lastest_target = null;
-    formstyle_create_dragdrop_lastest_target = null;
+    formstyle_create_dragdrop_obj_cloneobj = null;
+    formstyle_create_dragdrop_obj_lastest_target = null;
+    formstyle_create_dragdrop_obj_lastest_target = null;
 }
 
 function formstyle_create_dragdrop_obj_removeEvent() {
@@ -455,7 +509,6 @@ function formstyle_create_dragdrop_obj_addItem(groupid,layout,draggable){
     if (layout == '' || layout == undefined || layout == null) { console_error("Missing layout."); return false; }
     if (isset(draggable) === false || draggable == '' || draggable == false || draggable == 0) { draggable = 'false'; }else{draggable = 'true';}
 
-    let formstyle_create_dragdrop_obj_prefix = 'formstyle_create_dragdrop_obj_';
     // -- id -- //
     let container_id = formstyle_create_dragdrop_obj_prefix + 'container_'+groupid;
     let container = document.getElementById(container_id);
@@ -468,6 +521,58 @@ function formstyle_create_dragdrop_obj_addItem(groupid,layout,draggable){
 
     formstyle_create_dragdrop_obj_addClass2AllChildren(tmp_div, 'formstyle_create_dragdrop_obj_css_child');
 
+    return true;
+}
+
+function formstyle_create_dragdrop_obj_getItemContainer(groupid){
+    if (isset(groupid) === false || groupid == '') { console_error("Missing groupid."); return false; }
+    // -- id -- //
+    let container_id = formstyle_create_dragdrop_obj_prefix + 'container_'+groupid;
+    let container = document.getElementById(container_id);
+    return container;
+}
+
+function formstyle_create_dragdrop_obj_getSortedItemMap(groupid,sortmode){
+    if (isset(groupid) === false || groupid == '') { console_error("Missing groupid."); return false; }
+    if (isset(sortmode) === false || sortmode == '') { sortmode = 0; } else { sortmode = 1; }
+
+    // -- id -- //
+    let container_id = formstyle_create_dragdrop_obj_prefix + 'container_'+groupid;
+    let container = document.getElementById(container_id);
+    let result_map = {};
+
+    // if sortmode == 1 ,sort the result_map sorting to be descending by key
+    if (sortmode == 1) {
+        let all_items = container.querySelectorAll('.formstyle_create_dragdrop_obj_css');
+        Array.from(all_items).slice().reverse().forEach((item, index) => {
+            result_map[index] = item.id;
+        });
+    }else{
+        container.querySelectorAll('.formstyle_create_dragdrop_obj_css').forEach((item, index) => {
+            result_map[index] = item.id;
+        });
+    }
+
+    return result_map;
+}
+
+function formstyle_create_dragdrop_obj_deleteitem(itemid){
+    if(isset(itemid) === false || itemid == '') { console_error("Missing item ID."); return false; }
+    let item = document.getElementById(itemid);
+    if(isset(item) && isvalidid(itemid)) {
+        item.remove();
+    }
+    
+    return true;
+}
+
+function formstyle_create_dragdrop_obj_deleteobj(groupid){
+    if (isset(groupid) === false || groupid == '') { console_error("Missing groupid."); return false; }
+    let master_container_id = formstyle_create_dragdrop_obj_prefix + 'master_container_' + groupid;
+    let master_container = document.getElementById(master_container_id);
+    if(isset(master_container) && isvalidid(master_container_id)) {
+        master_container.remove();
+    }
     return true;
 }
 
@@ -523,45 +628,67 @@ function formstyle_create_dragdrop_obj_waitForElement(selector, callback, interv
 
 var autoScrollTimer = null;
 var isAutoScrolling = false;
+var autoScrollRAF = null;
 
-function startAutoScroll(direction) {
-    if (isset(direction) === false || direction == '') { direction = 'down'; }
-    if (isAutoScrolling) return;
 
-    isAutoScrolling = true;
-    autoScrollTimer = setInterval(function () {
-        if (direction === 'down') {
-            // ✅ Check bottom
-            if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 10) {
-                stopAutoScroll();
-                return;
-            }
-            // Scroll down
-            window.scrollBy({
-                top: 200,
-                behavior: 'smooth'
-            });
-        } else if (direction === 'up') {
-            // ✅ Check top
-            if (window.scrollY <= 0) {
-                stopAutoScroll();
-                return;
-            }
-            // Scroll up
-            window.scrollBy({
-                top: -200,
-                behavior: 'smooth'
-            });
+function formstyle_create_dragdrop_obj_handleAutoScroll(event) {
+    let mouseY = event.clientY;
+    if (event.type === 'touchmove' && event.touches && event.touches[0]) {
+        mouseY = event.touches[0].clientY;
+    }
+    
+    const windowHeight = window.innerHeight;
+    const bottomThreshold = 200;
+    const topThreshold = 200;
+
+    if (mouseY <= topThreshold) {
+        if (!isAutoScrolling) {
+            formstyle_create_dragdrop_obj_startAutoScroll('up');
         }
-    }, 200);
+    } else if (windowHeight - mouseY <= bottomThreshold) {
+        if (!isAutoScrolling) {
+            formstyle_create_dragdrop_obj_startAutoScroll('down');
+        }
+    } else {
+        formstyle_create_dragdrop_obj_stopOptimizedAutoScroll();
+    }
 }
 
-function stopAutoScroll() {
+function formstyle_create_dragdrop_obj_startAutoScroll(direction) {
+    if (isset(direction) === false || direction == '') { direction = 'down'; }
+    if (isAutoScrolling) return;
+    
+    isAutoScrolling = true;
+    
+    function scroll() {
+        if (!isAutoScrolling) return;
+        
+        if (direction === 'down') {
+            if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 10) {
+                formstyle_create_dragdrop_obj_stopOptimizedAutoScroll();
+                return;
+            }
+            window.scrollBy(0, 10); // Smaller, smoother increments
+        } else if (direction === 'up') {
+            if (window.scrollY <= 0) {
+                formstyle_create_dragdrop_obj_stopOptimizedAutoScroll();
+                return;
+            }
+            window.scrollBy(0, -10);
+        }
+        
+        autoScrollRAF = requestAnimationFrame(scroll);
+    }
+    
+    autoScrollRAF = requestAnimationFrame(scroll);
+}
+
+function formstyle_create_dragdrop_obj_stopOptimizedAutoScroll() {
     if (!isAutoScrolling) return;
     
     isAutoScrolling = false;
-    if (autoScrollTimer) {
-        clearInterval(autoScrollTimer);
-        autoScrollTimer = null;
+    if (autoScrollRAF) {
+        cancelAnimationFrame(autoScrollRAF);
+        autoScrollRAF = null;
     }
 }
