@@ -242,6 +242,23 @@ function formstyle_create_dragdrop_obj_handleMoveStart(event){
     formstyle_create_dragdrop_obj_cloneobj = selected_element.cloneNode(true);
     formstyle_create_dragdrop_obj_lastest_target = selected_element; // Store original element
 
+    // -- curso object -- //
+    formstyle_create_dragdrop_obj_crusorobj = document.createElement('div');
+    formstyle_create_dragdrop_obj_crusorobj.appendChild(formstyle_create_dragdrop_obj_cloneobj.cloneNode(true));
+    formstyle_create_dragdrop_obj_crusorobj = formstyle_create_dragdrop_obj_cloneobj.cloneNode(true);
+    formstyle_create_dragdrop_obj_crusorobj.style.backgroundColor = 'white';
+    formstyle_create_dragdrop_obj_crusorobj.style.opacity = '0.8';
+    formstyle_create_dragdrop_obj_crusorobj.style.padding = '6px';
+    formstyle_create_dragdrop_obj_crusorobj.style.position = 'absolute';
+    formstyle_create_dragdrop_obj_crusorobj.style.display = 'none';
+    formstyle_create_dragdrop_obj_crusorobj.style.zIndex = '999'; // -- set the zindex to the highest -- //
+    formstyle_create_dragdrop_obj_crusorobj.classList.remove('formstyle_create_dragdrop_obj_css');
+    formstyle_create_dragdrop_obj_crusorobj.classList.add('formstyle_create_dragdrop_obj_animated-border');
+
+    if(formstyle_create_dragdrop_obj_crusorobj != null){
+        document.body.appendChild(formstyle_create_dragdrop_obj_crusorobj);
+    }
+
     selected_element.classList.add('formstyle_create_dragdrop_obj_border');
 
     formstyle_create_dragdrop_obj_clickstart();
@@ -281,23 +298,9 @@ function formstyle_create_dragdrop_obj_handleMoving(event){
         currentY = event.pageY;
     }
     
-    if (isset(formstyle_create_dragdrop_obj_crusorobj) == true) {
-        formstyle_create_dragdrop_obj_crusorobj.remove();
-        formstyle_create_dragdrop_obj_crusorobj = null;
-    }
-    
-    formstyle_create_dragdrop_obj_crusorobj = document.createElement('div');
-    formstyle_create_dragdrop_obj_crusorobj.appendChild(formstyle_create_dragdrop_obj_cloneobj.cloneNode(true));
-    formstyle_create_dragdrop_obj_crusorobj = formstyle_create_dragdrop_obj_cloneobj.cloneNode(true);
-    formstyle_create_dragdrop_obj_crusorobj.style.backgroundColor = 'white';
-    formstyle_create_dragdrop_obj_crusorobj.style.opacity = '0.8';
-    formstyle_create_dragdrop_obj_crusorobj.style.padding = '6px';
-    formstyle_create_dragdrop_obj_crusorobj.classList.add('formstyle_create_dragdrop_obj_animated-border');
-    formstyle_create_dragdrop_obj_crusorobj.style.position = 'absolute';
+    formstyle_create_dragdrop_obj_crusorobj.style.display = 'block';
     formstyle_create_dragdrop_obj_crusorobj.style.top = (currentY + 0) + 'px';
     formstyle_create_dragdrop_obj_crusorobj.style.left = (currentX + 10) + 'px';
-    formstyle_create_dragdrop_obj_crusorobj.style.zIndex = '999'; // -- set the zindex to the highest -- //
-    formstyle_create_dragdrop_obj_crusorobj.classList.remove('formstyle_create_dragdrop_obj_css');
 
     document.body.style.cursor = 'grabbing';
     if(formstyle_create_dragdrop_obj_crusorobj != null){
