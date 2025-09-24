@@ -61,7 +61,7 @@ const formstyle_create_dragdrop_obj_optimizedHandleMoving = formstyle_create_dra
 }, 10); // ~60fps throttling
 
 
-function formstyle_create_dragdrop_obj(groupid,direction,master_container_style,item_container_style,default_title){
+function formstyle_create_dragdrop_obj(groupid,direction,drag_mode,master_container_style,item_container_style,default_title){
     if (groupid == '' || groupid == undefined || groupid == null) { console_error("Missing groupid."); return false; }
     if (master_container_style == '' || master_container_style == undefined || master_container_style == null) {
         master_container_style = 'background-color: #EAEAEA; border: 2px dashed var(--theme-color); border-radius: 8px; width:300px; margin:12px;';
@@ -69,6 +69,7 @@ function formstyle_create_dragdrop_obj(groupid,direction,master_container_style,
     if(item_container_style == '' || item_container_style == undefined || item_container_style == null) { item_container_style = ''; }
     if (direction == '' || direction == undefined || direction == null) { direction = 'column'; }
     if (default_title == '' || default_title == undefined || default_title == null) { default_title = 'Default Title'; }
+    if (drag_mode == '' || drag_mode == undefined || drag_mode == null || drag_mode == 'move') { drag_mode = 'move'; }else{ drag_mode = 'copy'; }
     
     // -- id -- //
     let master_container_id = formstyle_create_dragdrop_obj_prefix +'master_container_' +groupid;
@@ -77,7 +78,7 @@ function formstyle_create_dragdrop_obj(groupid,direction,master_container_style,
 
     mylayout += '<div id="' + master_container_id + '" style="' + master_container_style + ' overscroll-behavior: none;">';
     // -- item container -- //
-    mylayout += '<div id="' + container_id + '" style="display:flex; flex-direction:'+direction+'; flex-wrap:wrap; gap:8px; margin:8px; min-height:60px; padding:20px; overscroll-behavior: none; '+item_container_style+'">';
+    mylayout += '<div id="' + container_id + '" style="display:flex; flex-direction:'+direction+'; flex-wrap:wrap; gap:8px; margin:8px; min-height:60px; padding:20px; overscroll-behavior: none; '+item_container_style+'" data-dragmode="' + drag_mode + '">';
     mylayout += '</div>';
     // -- end of item container -- //
     mylayout += '</div>';
@@ -250,6 +251,7 @@ function formstyle_create_dragdrop_obj_handleMoveStart(event){
     formstyle_create_dragdrop_obj_crusorobj.style.opacity = '0.8';
     formstyle_create_dragdrop_obj_crusorobj.style.padding = '6px';
     formstyle_create_dragdrop_obj_crusorobj.style.position = 'absolute';
+    formstyle_create_dragdrop_obj_crusorobj.style.maxWidth = '40%';
     formstyle_create_dragdrop_obj_crusorobj.style.display = 'none';
     formstyle_create_dragdrop_obj_crusorobj.style.zIndex = '999'; // -- set the zindex to the highest -- //
     formstyle_create_dragdrop_obj_crusorobj.classList.remove('formstyle_create_dragdrop_obj_css');
@@ -437,14 +439,25 @@ function formstyle_create_dragdrop_obj_performDrop(dropTarget) {
         dropTarget = dropTarget.closest('.formstyle_create_dragdrop_obj_css');
     }
 
+
+    let original_element = formstyle_create_dragdrop_obj_lastest_target;
+    let original_drag_mode = original_element.parentElement.getAttribute('data-dragmode');
+    let target_drag_mode = dropTarget.parentElement.getAttribute('data-dragmode');
+
+    if(original_drag_mode == 'copy' && target_drag_mode != 'copy'){
+        original_element = formstyle_create_dragdrop_obj_lastest_target.cloneNode(true);
+        original_element.classList.remove('formstyle_create_dragdrop_obj_border');
+        original_element.id = original_element.id + '_copy_' + formstyle_create_dragdrop_getUniqueId();
+    }
+
     if (dropTarget.classList.contains('formstyle_create_dragdrop_obj_css')) {
         if(dropTarget.previousElementSibling == formstyle_create_dragdrop_obj_lastest_target){
-            dropTarget.parentElement.insertBefore(dropTarget, formstyle_create_dragdrop_obj_lastest_target); // -- insert after
+            dropTarget.parentElement.insertBefore(dropTarget, original_element); // -- insert after
         }else{
-            dropTarget.parentElement.insertBefore(formstyle_create_dragdrop_obj_lastest_target, dropTarget); // -- insert before
+            dropTarget.parentElement.insertBefore(original_element, dropTarget); // -- insert before
         }
     } else if (dropTarget.id && dropTarget.id.startsWith('formstyle_create_dragdrop_obj_container_')) {
-        dropTarget.appendChild(formstyle_create_dragdrop_obj_lastest_target);
+        dropTarget.appendChild(original_element);
     }
 
     formstyle_create_dragdrop_obj_lastest_target.classList.remove('formstyle_create_dragdrop_obj_border');
